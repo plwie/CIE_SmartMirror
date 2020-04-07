@@ -1,0 +1,11 @@
+from datetime import datetime
+import pytz
+
+def time_convert(timezone,unix_time):
+    # get time in tz
+    tz = pytz.timezone(timezone)
+    dt = datetime.fromtimestamp(unix_time, tz)
+    # print it
+    return(dt.strftime('%Y-%m-%d %H:%M:%S %Z%z'))
+
+time_convert('Asia/Bangkok',1586019600)
