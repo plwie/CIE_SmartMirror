@@ -1,0 +1,57 @@
+# Import libraries
+import requests
+import urllib.request
+import time
+from bs4 import BeautifulSoup
+import json
+from Unix_Converter import time_convert
+
+# Set the URL you want to webscrape from
+url = 'https://api.darksky.net/forecast/75bcc50aef1d5aec09148f2849c50db5/13.8816,100.6445/?units=si'
+
+# Connect to the URL
+response = requests.get(url)
+
+result = response.json()
+
+data = result['hourly']
+
+def extract_values(obj, key,key2,key3):
+    """Pull all values of specified key from nested JSON."""
+    summary = []
+    time = []
+    temperature = []
+
+    def extract(obj, summary,time,temperature, key,key2,key3):
+        """Recursively search for values of key in JSON tree."""
+        if isinstance(obj, dict):
+            for k, v  in obj.items():
+                if isinstance(v, (dict, list)):
+                    extract(v, summary,time,temperature, key,key2,key3)
+                elif k == key:
+                    summary.append(v)
+                elif k == key2:
+                    time.append(time_convert('Asia/Bangkok',v))
+                elif k == key3:
+
+                    temperature.append(v)
+        elif isinstance(obj, list):
+            for item in obj:
+                extract(item, summary,time,temperature,key,key2,key3)
+        return summary,time,temperature
+
+    results = extract(obj, summary,time,temperature, key,key2,key3)
+    return results
+
+z = extract_values(data,'summary','time','temperature')
+print(z)
+
+# print(data)
+
+
+
+
+
+
+
+
