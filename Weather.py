@@ -15,31 +15,35 @@ class Weather(QWidget):
         
         #Vbox
         self.vbox= QVBoxLayout()
-        self.hbox = QHBoxLayout()
         self.vbox1 = QVBoxLayout()
         self.vbox2 = QVBoxLayout()
+        self.vbox3 = QVBoxLayout()
+        #Location
+        self.location = QLabel('Bangkok')
+        self.location.setFont(font2)
+        self.vbox1.addWidget(self.location)
         #Temperature
         degree_sign= u'\N{DEGREE SIGN}'
         temperature = str(int(result['currently']['temperature']))
         temperature2 = "%s%s" % (temperature, degree_sign)
         self.temperature = QLabel(temperature2)
         self.temperature.setFont(font1)
-        self.hbox.addWidget(self.temperature)
+        self.vbox2.addWidget(self.temperature)
         #Current
         current = str(result['currently']['summary'])
         self.current = QLabel(current)
         self.current.setFont(font1)
-        self.vbox2.addWidget(self.current)
-        #Forecast
-        self.forecastLbl = QLabel('forecast')
-        self.forecastLbl.setFont(font1)
-        self.vbox2.addWidget(self.forecastLbl)
+        self.vbox3.addWidget(self.current)
+        # #Forecast
+        # self.forecastLbl = QLabel('forecast')
+        # self.forecastLbl.setFont(font1)
+        # self.vbox2.addWidget(self.forecastLbl)
 
-        self.hbox.setAlignment(Qt.AlignLeft)
         self.vbox2.addStretch(1)
 
-        self.vbox.addLayout(self.hbox)
+        self.vbox.addLayout(self.vbox1)
         self.vbox.addLayout(self.vbox2)
+        self.vbox.addLayout(self.vbox3)
         self.vbox.setContentsMargins(0,0,0,0)
         self.setLayout(self.vbox)
 
