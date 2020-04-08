@@ -120,6 +120,8 @@ class Calendar(QWidget):
         self.calendar = QCalendarWidget(self)
         self.setWindowTitle('Calendar')
         self.resize(350,220)
+        self.calendar.setStyleSheet("""border: 1px solid #32414B;
+        border-radius: 4px;""")
         self.initUI()
 
     def initUI(self):
