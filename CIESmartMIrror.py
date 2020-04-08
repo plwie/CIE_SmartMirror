@@ -35,20 +35,25 @@ class Window(QWidget):
         self.pal.setColor(QPalette.Foreground,Qt.white)
         self.setPalette(self.pal)
 
-    #HBox1 {Clock,Calendar}
-        Hbox1 = QHBoxLayout()
+    #HBox1 {VBox1,VBox2}
+        Vbox1 = QVBoxLayout()
+        Vbox2 = QVBoxLayout()
+        Hbox1 = QVBoxLayout()
+        Hbox1.addLayout(Vbox1)
+        Hbox1.addLayout(Vbox2)
+        self.setLayout(Hbox1)
+    #VBox1 {Clock,Calendar}
         self.calendar = Calendar()
         self.calendar.setFixedHeight(150)
         self.clock = Clock()
         self.clock.setFixedHeight(150)
+        Vbox1.addWidget(self.clock)
+        Vbox1.addWidget(self.calendar)
+    #VBox1 {Weather}
         self.weather = Weather()
         self.weather.setFixedHeight(150)
-        Hbox1.addWidget(self.weather)
-        Hbox1.addWidget(self.clock)
-        Hbox1.addWidget(self.calendar)
-        self.setLayout(Hbox1)
-        
-        
+        Vbox2.addWidget(self.weather)
+
         self.show()
 
 class Clock(QWidget):
