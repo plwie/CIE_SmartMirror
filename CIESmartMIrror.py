@@ -39,6 +39,11 @@ news_url = 'http://newsapi.org/v2/top-headlines?country=us&apiKey=f7d4f9f59e054c
 response_news = requests.get(news_url)
 result_news = response_news.json()
 
+#For Covid
+covid_url = "https://pomber.github.io/covid19/timeseries.json"
+response_covid = requests.get(covid_url)
+result_covid = response_covid.json()
+
 class Window(QWidget):
     def __init__(self,*args,**kwargs):
         super().__init__()
@@ -54,38 +59,23 @@ class Window(QWidget):
         self.pal.setColor(QPalette.Foreground,Qt.white)
         self.setPalette(self.pal)
 
-        #Hbox1{Weather,Clock}
-        self.hbox1 = QHBoxLayout()
+        self.vbox2 = QVBoxLayout()
         self.clock = Clock()
         self.weather = Weather()
         self.clock.setFixedHeight(150)
-        self.weather.setFixedHeight(150)
-        self.hbox1.addWidget(self.weather)
-        self.hbox1.addStretch()
-        self.hbox1.addWidget(self.clock)
-
-        # #Hbox2{Stocks}
-        # self.hbox2 = QHBoxLayout()
-        # self.stocks = Stocks(QWidget())
-        # self.stocks.setFixedWidth(200)
-        # self.hbox2.addStretch(2)
-        # self.hbox2.addWidget(self.stocks)
-
-        #Hbox3{calender} 
-        self.vbox1 = QHBoxLayout()
-        self.calendar = Calendar()
-        self.calendar.setFixedWidth(200)
-        self.vbox1.addWidget(self.calendar)
-
-        #Hbox4{News}
-        self.vbox2 = QVBoxLayout()
+        self.covid = Covid(QWidget())
         self.news = News(QWidget)
+        self.news.setFixedHeight(300)
+        self.covid.setFixedWidth(500)
+        self.vbox2.addWidget(self.clock)
+        self.vbox2.addStretch()
+        self.vbox2.addWidget(self.weather)
+        self.vbox2.addStretch()
+        self.vbox2.addWidget(self.covid)
+        self.vbox2.addStretch()
         self.vbox2.addWidget(self.news)
 
         self.vbox = QVBoxLayout()
-        self.vbox.addLayout(self.hbox1)
-        # self.vbox.addLayout(self.hbox2)
-        self.vbox.addLayout(self.vbox1)
         self.vbox.addLayout(self.vbox2)
         self.setLayout(self.vbox)
 
@@ -97,26 +87,27 @@ class Clock(QWidget):
         self.initUI()
 
     def initUI(self):
-        font1 = QFont('Bavaria', 50)
-        font2 = QFont('Bavaria', 30)
+        font1 = QFont('Times', 50)
+        font2 = QFont('Yikes', 30)
 
         self.vbox = QVBoxLayout()
         self.time1 = ''
         self.timeLbl = QLabel('')
-        self.timeLbl.setAlignment(Qt.AlignRight)
+        self.timeLbl.setAlignment(Qt.AlignLeft)
         self.timeLbl.setFont(font1)
         self.day_of_week1 = ''
         self.dayOWLbl = QLabel('')
-        self.dayOWLbl.setAlignment(Qt.AlignRight)
+        self.dayOWLbl.setFont(QFont('Bavaria',11))
+        self.dayOWLbl.setAlignment(Qt.AlignLeft)
         self.date1 = ''
         self.dateLbl = QLabel('')
-        self.dateLbl.setAlignment(Qt.AlignRight)
+        self.dateLbl.setFont(QFont('Bavaria',11))
+        self.dateLbl.setAlignment(Qt.AlignLeft)
         self.vbox.addWidget(self.timeLbl)
         self.vbox.addWidget(self.dayOWLbl)
         self.vbox.addWidget(self.dateLbl)
-        self.vbox.addStretch(2)
         self.vbox.setSpacing(0)
-        self.setContentsMargins(0,0,0,0)
+        self.vbox.setContentsMargins(0,0,0,0)
         self.setLayout(self.vbox)
         self.time_update()
 
@@ -173,18 +164,14 @@ class Weather(QWidget):
         self.initUI()
 
     def initUI(self):
-        font1 = QFont('Bavaria', 20)
-        font2 = QFont('Bavaria', 10)
+        font1 = QFont('Times', 17)
+        font2 = QFont('Bavaria', 12)
         
         #Vbox
         self.vbox= QVBoxLayout()
         self.vbox1 = QVBoxLayout()
         self.vbox2 = QVBoxLayout()
         self.vbox3 = QVBoxLayout()
-        #Location
-        self.location = QLabel('Bangkok')
-        self.location.setFont(font2)
-        self.vbox1.addWidget(self.location)
         #Icon
         self.icon = ''
         self.iconLbl = QLabel()
@@ -198,7 +185,7 @@ class Weather(QWidget):
             if self.icon != icon2:
                 self.icon = icon2
                 image = cv2.imread(icon2, cv2.IMREAD_COLOR)
-                image = cv2.resize(image,(45,45), interpolation = cv2.INTER_CUBIC)
+                image = cv2.resize(image,(50,50), interpolation = cv2.INTER_CUBIC)
                 image = QImage(image, image.shape[1], image.shape[0], 
                     image.strides[0], QImage.Format_RGB888)
 
@@ -206,6 +193,10 @@ class Weather(QWidget):
         else:
             self.iconLbl.setPixmap(QPixmap(''))
             a=1
+        #Location
+        self.location = QLabel('Bangkok')
+        self.location.setFont(font2)
+        self.vbox1.addWidget(self.location)
         #Temperature
         degree_sign= u'\N{DEGREE SIGN}'
         temperature = str(int(result_weather['currently']['temperature']))
@@ -239,16 +230,18 @@ class News(QWidget):
         self.initUI()
 
     def initUI(self):
-        font1 = QFont('Bavaria', 20)
+        font1 = QFont('Times', 18)
         font2 = QFont('Bavaria', 10)
+        font3 = QFont('Bavaria', 12)
         #Vbox
         self.vbox = QVBoxLayout()
         self.vbox1 = QVBoxLayout()
         self.vbox.addLayout(self.vbox1)
+        self.vbox.setContentsMargins(0,0,0,0)
         self.setLayout(self.vbox)
         #Heading
         image = cv2.imread(r"D:\Coding\Project\Smart Mirror\Image\Newspaper.png", cv2.IMREAD_COLOR)
-        image = cv2.resize(image,(50,50), interpolation = cv2.INTER_AREA)
+        image = cv2.resize(image,(70,70), interpolation = cv2.INTER_AREA)
         image = QImage(image, image.shape[1], image.shape[0], 
                        image.strides[0], QImage.Format_RGB888)
         newspaperIcon = QLabel()
@@ -265,14 +258,60 @@ class News(QWidget):
         self.article1 = QLabel(article1)
         self.article2 = QLabel(article2)
         self.article3 = QLabel(article3)
-        self.article1.setFont(font2)
-        self.article2.setFont(font2)
-        self.article3.setFont(font2)
+        self.article1.setFont(font3)
+        self.article2.setFont(font3)
+        self.article3.setFont(font3)
         self.vbox1.addWidget(self.article1)
         self.vbox1.addWidget(self.article2)
         self.vbox1.addWidget(self.article3)
 
+class Covid(QWidget):
+    def __init__(self,*args,**kwargs):
+        super(Covid,self).__init__()
+        self.initUI()
 
+    def initUI(self):
+        font1 = QFont('Times', 18)
+        font2 = QFont('Bavaria', 10)
+        font3 = QFont('Bavaria', 12)
+        #Vbox
+        self.vbox = QVBoxLayout()
+        self.vbox1 = QVBoxLayout()
+        self.vbox.addLayout(self.vbox1)
+        self.setLayout(self.vbox)
+
+        #Heading
+        self.headline = QLabel('Covid-19 Tracker')
+        self.headline.setFont(font1)
+        self.vbox1.addWidget(self.headline)
+
+        #Covid data
+        infect = str(result_covid['Thailand'][len(result_covid['Thailand'])-1]['confirmed'])
+        death = str(result_covid['Thailand'][len(result_covid['Thailand'])-1]['deaths'])
+        recover = str(result_covid['Thailand'][len(result_covid['Thailand'])-1]['recovered'])
+        #Infected
+        self.infectlbl = QLabel('Infected')
+        self.infectlbl.setFont(font3)
+        self.infect = QLabel(infect)
+        self.infect.setFont(font2)
+        #Death
+        self.deathlbl = QLabel('Death')
+        self.deathlbl.setFont(font3)
+        self.death = QLabel(death)
+        self.death.setFont(font2)
+        #Recovered
+        self.recoverlbl = QLabel('Recovered')
+        self.recover = QLabel(recover)
+        self.recoverlbl.setFont(font3)
+        self.recover.setFont(font2)
+
+        self.vbox1.addWidget(self.infectlbl)
+        self.vbox1.addWidget(self.infect)
+        self.vbox1.addWidget(self.deathlbl)
+        self.vbox1.addWidget(self.death)
+        self.vbox1.addWidget(self.recoverlbl)
+        self.vbox1.addWidget(self.recover)
+        self.vbox.setContentsMargins(0,0,0,0)
 
 
 if __name__ == '__main__':
