@@ -9,6 +9,11 @@ import cv2
 import RPi.GPIO as GPIO
 import Adafruit_DHT
 from datetime import datetime
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
@@ -60,28 +65,21 @@ result_covid = response_covid.json()
 state = False
  
 def distance():
-    # set Trigger to HIGH
     GPIO.output(GPIO_TRIGGER, True)
  
-    # set Trigger after 0.01ms to LOW
     time.sleep(0.00001)
     GPIO.output(GPIO_TRIGGER, False)
  
     StartTime = time.time()
     StopTime = time.time()
- 
-    # save StartTime
+
     while GPIO.input(GPIO_ECHO) == 0:
         StartTime = time.time()
  
-    # save time of arrival
     while GPIO.input(GPIO_ECHO) == 1:
         StopTime = time.time()
  
-    # time difference between start and arrival
     TimeElapsed = StopTime - StartTime
-    # multiply with the sonic speed (34300 cm/s)
-    # and divide by 2, because there and back
     distance = (TimeElapsed * 34300) / 2
  
     return distance
@@ -89,17 +87,17 @@ def distance():
 def ultrasonic():    
     dist = distance()
     if dist <= 150:
-        state != state
+        state = not state
         time.sleep(300)
-        state != state
+        state = not state
     time.sleep(1)
-
-#For Temp&Humid
-humidity, temperature = Adafruit_DHT.read(DHT_SENSOR, DHT_PIN)
-print("Temp={0:0.1f}C Humidity={1:0.1f}%".format(temperature, humidity))
 
 
 class Window(QWidget):
+
+    global state
+    state = False
+
     def __init__(self,*args,**kwargs):
         super().__init__()
         self.title = 'Smart Mirror'
@@ -116,7 +114,9 @@ class Window(QWidget):
 
         self.hbox1 = QHBoxLayout()
         self.clock = Clock(QWidget())
+        self.clock.setVisible(state)
         self.weather = Weather(QWidget())
+        self.weather.setVisible(state)
         self.clock.setFixedHeight(150)
         self.weather.setFixedHeight(150)
 
@@ -125,15 +125,19 @@ class Window(QWidget):
         self.hbox1.addStretch()
         self.hbox1.addWidget(self.clock)
 
-        # for Covid
+        # for Covid & Stocks
         self.hbox2 = QHBoxLayout()
         self.covid = Covid()
+        self.covid.setVisible(state)
+        self.hbox.addStretch(2)
+        self.stocks = Stocks()
+        self.hbox3.addWidget(self.stocks)
         self.hbox2.addWidget(self.covid)
 
         #News
-
         self.hbox3 = QHBoxLayout()
         self.news= News()
+        self.news.setVisible(state)
         self.hbox3.addWidget(self.news)
 
 
@@ -291,13 +295,6 @@ class Weather(QWidget):
         self.vbox.setContentsMargins(0,0,0,0)
         self.setLayout(self.vbox)
 
-    def time_convert(timezone,unix_time):
-        # get time in tz
-        tz = pytz.timezone(timezone)
-        dt = datetime.fromtimestamp(unix_time, tz)
-        # print it
-        return(dt.strftime('%Y-%m-%d %H:%M:%S %Z%z'))
-
 class News(QWidget):
     def __init__(self, source=None):
         super(News, self).__init__()
@@ -381,25 +378,75 @@ class Covid(QWidget):
         self.vbox1.addWidget(self.recover)
         self.vbox.setContentsMargins(0,0,0,0)
 
-
-class Humid(QWidget):
+class Stocks(QWidget):
     def __init__(self,*args,**kwargs):
-        super(Humid,self).__init__()
+        super(Covid,self).__init__()
         self.initUI()
 
     def initUI(self):
         font1 = QFont('Times', 14)
         font2 = QFont('Bavaria', 7)
         font3 = QFont('Bavaria', 10)
-
-        self.vbox= QVBoxLayout()
-        humidity, temperature = Adafruit_DHT.read(DHT_SENSOR, DHT_PIN)
-        print("Temp={0:0.1f}C Humidity={1:0.1f}%".format(temperature, humidity))
-        self.temperature = QLabel("Room Temperature" , str(temperature,degree_sign),"C")
-        self.humid = QLabel(str(humidity),"%")
-        self.vbox.addWidget(self.temperature)
-        self.vbox.addWidget(self.humid)
+        #Vbox
+        self.vbox = QVBoxLayout()
+        self.vbox1 = QVBoxLayout()
+        self.vbox.addLayout(self.vbox1)
         self.setLayout(self.vbox)
+
+        #Heading
+        self.headline = QLabel('Stocks')
+        self.headline.setFont(font1)
+        self.vbox1.addWidget(self.headline)
+
+    #Stocks Fetcher
+        # browser get
+        browser = webdriver.Chrome(executable_path="/Users/phaotong/Downloads/chromedriver.exe")
+        browser.get("https://www.google.com/search?q=aot+stock+price")
+        #find price
+        element = browser.find_element_by_xpath('//*[@id="knowledge-finance-wholepage__entity-summary"]/div/g-card-section/div/g-card-section/span[1]/span/span[1]')
+        #dict collect price
+        # prices()=
+        stock={}
+        stock['aot']=element.text
+
+        #new tab2
+        browser.execute_script("window.open('about:blank', 'tab2');")
+        browser.switch_to.window("tab2")
+        browser.get('https://www.google.com/search?q=dow+jones+price')
+        #get value
+        element = browser.find_element_by_xpath('//*[@id="knowledge-finance-wholepage__entity-summary"]/div/g-card-section/div/g-card-section/span[1]/span/span[1]')
+        stock['dowjones']=element.text
+
+        #new tab3
+        browser.execute_script("window.open('about:blank', 'tab3');")
+        browser.switch_to.window("tab3")
+        browser.get('https://www.google.com/search?q=cpall+price')
+        #get value
+        element = browser.find_element_by_xpath('//*[@id="knowledge-finance-wholepage__entity-summary"]/div/g-card-section/div/g-card-section/span[1]/span/span[1]')
+        stock['cpall']=element.text
+        time.sleep(3)
+        browser.quit()
+        #Stocks data
+        downjones = ("DownJones : " + stock['dowjones'])
+        aot = ("AOT : " + stock['aot'])
+        cpall = ("CPAll : " + stock['cpall'])
+        #DownJones
+        self.downjones = QLabel(downjones)
+        self.downjones.setFont(font3)
+        #AOT
+        self.aot = QLabel(aot)
+        self.aot.setFont(font3)
+        #CPAll
+        self.cpall = QLabel(cpall)
+        self.cpall.setFont(font3)
+
+        self.vbox1.addWidget(self.downjones)
+        self.vbox1.addWidget(self.aot)
+        self.vbox1.addWidget(self.cpall)
+        self.vbox.setContentsMargins(0,0,0,0)
+
+    
+    
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
